@@ -1,0 +1,28 @@
+[project]
+name = "smartshark-backend"
+version = "0.1.0"
+description = "Smartshark network troubleshooting workspace — backend"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "sqlalchemy[asyncio]>=2.0",
+    "aiosqlite>=0.21",
+    "pyjwt>=2.10",
+    "passlib[bcrypt]>=1.7",
+    "pydantic-settings>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.25",
+    "httpx>=0.28",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
