@@ -134,7 +134,7 @@ export default function AdminSettingsPage() {
             <h2 className="text-lg font-semibold text-gray-900">
               AI Provider Settings
             </h2>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-xs text-gray-700 font-medium">
               Configure the AI model provider for analysis.
             </p>
 
@@ -151,13 +151,13 @@ export default function AdminSettingsPage() {
               )}
               <div className="space-y-4 rounded-md bg-white p-6 shadow-sm border">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-900">
                     Provider
                   </label>
                   <select
                     value={provider}
                     onChange={(e) => setProvider(e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900"
                   >
                     <option value="openai">OpenAI</option>
                     <option value="anthropic">Anthropic</option>
@@ -165,18 +165,18 @@ export default function AdminSettingsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-900">
                     Model
                   </label>
                   <input
                     type="text"
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-900">
                     API Key
                   </label>
                   <input
@@ -184,11 +184,11 @@ export default function AdminSettingsPage() {
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder={settings?.api_key_set ? "••••••••" : "Enter API key"}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 placeholder:text-gray-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-900">
                     Base URL (optional)
                   </label>
                   <input
@@ -196,7 +196,7 @@ export default function AdminSettingsPage() {
                     value={baseUrl}
                     onChange={(e) => setBaseUrl(e.target.value)}
                     placeholder="https://api.openai.com/v1"
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 placeholder:text-gray-500"
                   />
                 </div>
               </div>

@@ -56,23 +56,23 @@ export default function AnalystManagement({ token }: AnalystManagementProps) {
 
         <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-700">Username</label>
+            <label className="block text-xs font-semibold text-gray-900">Username</label>
             <input
               type="text"
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none"
+              className="mt-1 block w-full rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700">Password</label>
+            <label className="block text-xs font-semibold text-gray-900">Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none"
+              className="mt-1 block w-full rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none"
             />
           </div>
           <div className="flex items-end">

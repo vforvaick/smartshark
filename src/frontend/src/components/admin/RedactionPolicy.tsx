@@ -55,7 +55,7 @@ export default function RedactionPolicyComponent({ token }: RedactionPolicyProps
     <div className="rounded-lg bg-white p-6 shadow-sm border space-y-6">
       <div>
         <h3 className="text-md font-semibold text-gray-900">Admin Redaction Policy & Masking Rules</h3>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-gray-700 font-medium mt-1">
           Configure masking rules applied to raw packet payloads before sending data to AI providers.
         </p>
       </div>
@@ -66,8 +66,8 @@ export default function RedactionPolicyComponent({ token }: RedactionPolicyProps
       <div className="space-y-4 border-t pt-4">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-gray-900">Mask Authorization Headers</div>
-            <div className="text-xs text-gray-500">Redacts `Authorization: ...` header tokens.</div>
+            <div className="text-sm font-semibold text-gray-900">Mask Authorization Headers</div>
+            <div className="text-xs text-gray-700 font-medium">Redacts `Authorization: ...` header tokens.</div>
           </div>
           <input
             type="checkbox"
@@ -79,8 +79,8 @@ export default function RedactionPolicyComponent({ token }: RedactionPolicyProps
 
         <div className="flex items-center justify-between border-t pt-3">
           <div>
-            <div className="text-sm font-medium text-gray-900">Mask Credentials & Cookies</div>
-            <div className="text-xs text-gray-500">Redacts tokens, API keys, and Cookie headers.</div>
+            <div className="text-sm font-semibold text-gray-900">Mask Credentials & Cookies</div>
+            <div className="text-xs text-gray-700 font-medium">Redacts tokens, API keys, and Cookie headers.</div>
           </div>
           <input
             type="checkbox"
@@ -92,8 +92,8 @@ export default function RedactionPolicyComponent({ token }: RedactionPolicyProps
 
         <div className="flex items-center justify-between border-t pt-3">
           <div>
-            <div className="text-sm font-medium text-gray-900">Mask Payment Card Numbers (PAN)</div>
-            <div className="text-xs text-gray-500">Redacts 16-digit credit card PAN strings.</div>
+            <div className="text-sm font-semibold text-gray-900">Mask Payment Card Numbers (PAN)</div>
+            <div className="text-xs text-gray-700 font-medium">Redacts 16-digit credit card PAN strings.</div>
           </div>
           <input
             type="checkbox"
@@ -105,8 +105,8 @@ export default function RedactionPolicyComponent({ token }: RedactionPolicyProps
 
         <div className="flex items-center justify-between border-t pt-3">
           <div>
-            <div className="text-sm font-medium text-gray-900">Anonymize IP Addresses</div>
-            <div className="text-xs text-gray-500">Replaces IPv4 addresses with persistent tokens (e.g. `[IP-A]`).</div>
+            <div className="text-sm font-semibold text-gray-900">Anonymize IP Addresses</div>
+            <div className="text-xs text-gray-700 font-medium">Replaces IPv4 addresses with persistent tokens (e.g. `[IP-A]`).</div>
           </div>
           <input
             type="checkbox"
@@ -117,7 +117,7 @@ export default function RedactionPolicyComponent({ token }: RedactionPolicyProps
         </div>
 
         <div className="border-t pt-3">
-          <label className="block text-sm font-medium text-gray-900">Payment Profile Tightening</label>
+          <label className="block text-sm font-semibold text-gray-900">Payment Profile Tightening</label>
           <select
             value={policy.profile}
             onChange={(e) => handleProfileChange(e.target.value)}

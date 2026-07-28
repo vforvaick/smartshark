@@ -29,7 +29,7 @@ export default function AuditLogs({ token }: AuditLogsProps) {
     <div className="rounded-lg bg-white p-6 shadow-sm border space-y-4">
       <div>
         <h3 className="text-md font-semibold text-gray-900">Audit Logs & AI Request Provenance</h3>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-gray-700 font-medium mt-1">
           Historical log of administrative actions, capture lifecycle events, and AI requests.
         </p>
       </div>
@@ -50,17 +50,17 @@ export default function AuditLogs({ token }: AuditLogsProps) {
           <tbody className="divide-y divide-gray-100 bg-white">
             {logs.map((log) => (
               <tr key={log.id} className="hover:bg-gray-50">
-                <td className="px-3 py-2 text-gray-500 whitespace-nowrap">{log.timestamp}</td>
+                <td className="px-3 py-2 text-gray-800 font-medium whitespace-nowrap">{log.timestamp}</td>
                 <td className="px-3 py-2 font-semibold text-gray-900 font-sans">{log.username || log.user_id}</td>
                 <td className="px-3 py-2">
-                  <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-bold text-gray-800">
+                  <span className="rounded bg-gray-200 px-1.5 py-0.5 text-xs font-bold text-gray-900">
                     {log.action}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-gray-600 font-sans">
+                <td className="px-3 py-2 text-gray-800 font-medium font-sans">
                   {log.target_type} {log.target_id ? `#${log.target_id}` : ""}
                 </td>
-                <td className="px-3 py-2 text-gray-700 truncate max-w-xs font-sans">
+                <td className="px-3 py-2 text-gray-900 font-medium truncate max-w-xs font-sans">
                   {JSON.stringify(log.details)}
                 </td>
               </tr>

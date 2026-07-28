@@ -74,7 +74,7 @@ export default function UploadModal({
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-semibold text-gray-900">
               PCAP / PCAPNG File
             </label>
             <input
@@ -82,18 +82,18 @@ export default function UploadModal({
               accept=".pcap,.pcapng,.cap"
               required
               onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+              className="mt-1 block w-full text-sm font-medium text-gray-800 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-semibold text-gray-900">
               Analysis Profile
             </label>
             <select
               value={profile}
               onChange={(e) => setProfile(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none"
             >
               {PROFILES.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -104,7 +104,7 @@ export default function UploadModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-semibold text-gray-900">
               Vantage Point (Optional)
             </label>
             <input
@@ -112,7 +112,7 @@ export default function UploadModal({
               placeholder="e.g. Core Switch SPAN port, Client Firewall"
               value={vantagePoint}
               onChange={(e) => setVantagePoint(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 placeholder:text-gray-500 shadow-sm focus:border-blue-500 focus:outline-none"
             />
           </div>
 
