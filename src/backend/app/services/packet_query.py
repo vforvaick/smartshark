@@ -4,7 +4,16 @@ The real engine will wrap tshark/sharkd. For now, we validate based on
 file magic numbers and return deterministic fixture packet data.
 """
 
+import datetime
+import os
 from dataclasses import dataclass
+from functools import lru_cache
+
+try:
+    from scapy.all import rdpcap, IP, IPv6, TCP, UDP, ICMP
+    _HAS_SCAPY = True
+except Exception:
+    _HAS_SCAPY = False
 
 from app.models.capture import DiagnosticCategory
 
@@ -428,7 +437,96 @@ def _validate_pcapng(content: bytes, filename: str) -> ValidationResult:
     return ValidationResult(valid=True)
 
 
-# --- Packet query methods (stub) ---
+# --- Real PCAP Reader helper ---
+
+@lru_cache(maxsize=64)
+def _read_real_packets_cache(capture_path: str):
+    if not _HAS_SCAPY or not os.path.exists(capture_path):
+        return None
+    try:
+        raw_pkts = rdpcap(capture_path)
+        if not raw_pkts:
+            return None
+    except Exception:
+        return None
+
+    parsed_items = []
+    for i, p in enumerate(raw_pkts, start=1):
+        ts_val = float(p.time)
+        try:
+            dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
+            time_str = dt.strftime("%H:%M:%S.%f")
+        except Exception:
+            time_str = f"{ts_val:.6f}"
+
+        src_ip = p[IP].src if IP in p else (p[IPv6].src if IPv6 in p else "00:00:00_00:00:00")
+        dst_ip = p[IP].dst if IP in p else (p[IPv6].dst if IPv6 in p else "00:00:00_00:00:00")
+
+        sport = p[TCP].sport if TCP in p else (p[UDP].sport if UDP in p else None)
+        dport = p[TCP].dport if TCP in p else (p[UDP].dport if UDP in p else None)
+
+        proto = "TCP" if TCP in p else ("UDP" if UDP in p else ("ICMP" if ICMP in p else p.name))
+
+        raw_b = bytes(p)
+        if b"FILEINFO" in raw_b or b"F5-Pseudo" in raw_b:
+            proto = "FILEINFO"
+
+        src_str = f"{src_ip}:{sport}" if sport is not None else src_ip
+        dst_str = f"{dst_ip}:{dport}" if dport is not None else dst_ip
+
+        info = []
+        if proto == "FILEINFO":
+            ascii_text = raw_b.decode('latin1', errors='ignore')
+            cmd_match = [part for part in ascii_text.split('\x00') if 'tcpdump' in part or 'host' in part]
+            if cmd_match:
+                info.append(cmd_match[0].strip())
+            else:
+                info.append("F5 Pseudo Packet Header")
+        elif TCP in p:
+            tcp = p[TCP]
+            flags = str(tcp.flags)
+            info.append(f"{sport} → {dport} [{flags}] Seq={tcp.seq} Ack={tcp.ack} Win={tcp.window} Len={len(tcp.payload)}")
+        elif UDP in p:
+            udp = p[UDP]
+            info.append(f"{sport} → {dport} Len={udp.len}")
+        else:
+            info.append(p.summary())
+
+        summary = PacketSummaryData(
+            frame_number=i,
+            timestamp=time_str,
+            source=src_str,
+            destination=dst_str,
+            protocol=proto,
+            length=len(p),
+            info=" ".join(info),
+        )
+
+        parsed_items.append({
+            "summary": summary,
+            "raw": p,
+            "raw_bytes": raw_b,
+            "src_ip": src_ip,
+            "src_port": sport,
+            "dst_ip": dst_ip,
+            "dst_port": dport,
+            "protocol": proto,
+        })
+
+    return parsed_items
+
+
+def _is_meaningful_capture(real_items: list[dict] | None) -> bool:
+    if not real_items:
+        return False
+    return any(
+        item["src_ip"] != "00:00:00_00:00:00"
+        or item["protocol"] in ("TCP", "UDP", "ICMP", "DNS", "HTTP", "FILEINFO")
+        for item in real_items
+    )
+
+
+# --- Packet query methods ---
 
 def list_packets(
     capture_path: str,
@@ -436,32 +534,86 @@ def list_packets(
     limit: int = 100,
     offset: int = 0,
 ) -> tuple[list[PacketSummaryData], FilterValidationResult | None]:
-    """List packets from a capture. Returns (packets, filter_error).
+    """List packets from a capture. Returns (packets, filter_error)."""
+    real_items = _read_real_packets_cache(capture_path)
+    use_real = _is_meaningful_capture(real_items)
 
-    For the stub, returns deterministic fixture data. Supports simple
-    protocol-based filtering (case-insensitive substring match).
-    """
     if display_filter:
         filter_result = validate_display_filter(display_filter)
         if not filter_result.valid:
             return [], filter_result
-        # Simple stub: filter by protocol substring match
-        filtered = [
-            p for p in _STUB_PACKETS
-            if display_filter.lower() in p.protocol.lower()
-        ]
-        return filtered[offset:offset + limit], None
+        
+        filt = display_filter.lower()
+        if use_real and real_items is not None:
+            filtered = [
+                item["summary"] for item in real_items
+                if (
+                    filt in item["summary"].protocol.lower()
+                    or filt in item["summary"].source.lower()
+                    or filt in item["summary"].destination.lower()
+                    or filt in item["summary"].info.lower()
+                    or filt in item["src_ip"].lower()
+                    or filt in item["dst_ip"].lower()
+                )
+            ]
+            return filtered[offset:offset + limit], None
+        else:
+            filtered = [
+                p for p in _STUB_PACKETS
+                if filt in p.protocol.lower()
+            ]
+            return filtered[offset:offset + limit], None
+
+    if use_real and real_items is not None:
+        return [item["summary"] for item in real_items[offset:offset + limit]], None
 
     return _STUB_PACKETS[offset:offset + limit], None
 
 
 def get_frame_detail(capture_path: str, frame_number: int) -> FrameDetailData | None:
-    """Get frame detail for a specific frame number. Returns None if not found."""
+    """Get frame detail for a specific frame number."""
+    real_items = _read_real_packets_cache(capture_path)
+    if _is_meaningful_capture(real_items) and real_items is not None and 1 <= frame_number <= len(real_items):
+        item = real_items[frame_number - 1]
+        summary = item["summary"]
+        
+        layers = [
+            LayerFieldData(name="Arrival Time", value=summary.timestamp),
+            LayerFieldData(name="Frame Length", value=f"{summary.length} bytes"),
+            LayerFieldData(name="Source", value=summary.source),
+            LayerFieldData(name="Destination", value=summary.destination),
+            LayerFieldData(name="Protocol", value=summary.protocol),
+        ]
+        
+        if item["src_port"] is not None:
+            layers.append(LayerFieldData(name="Source Port", value=str(item["src_port"])))
+        if item["dst_port"] is not None:
+            layers.append(LayerFieldData(name="Destination Port", value=str(item["dst_port"])))
+
+        return FrameDetailData(
+            frame_number=frame_number,
+            timestamp=summary.timestamp,
+            protocols=[summary.protocol],
+            layers=layers,
+        )
+
     return _STUB_FRAME_DETAILS.get(frame_number)
 
 
 def get_payload_preview(capture_path: str, frame_number: int) -> PayloadData | None:
-    """Get payload preview (hex + ASCII) for a frame. Returns None if not found."""
+    """Get payload preview (hex + ASCII) for a frame."""
+    real_items = _read_real_packets_cache(capture_path)
+    if _is_meaningful_capture(real_items) and real_items is not None and 1 <= frame_number <= len(real_items):
+        item = real_items[frame_number - 1]
+        raw_b = item["raw_bytes"]
+        hex_dump = " ".join(f"{b:02x}" for b in raw_b[:256])
+        ascii_dump = "".join(chr(b) if 32 <= b <= 126 else "." for b in raw_b[:256])
+        return PayloadData(
+            hex_dump=hex_dump,
+            ascii=ascii_dump,
+            length=len(raw_b),
+        )
+
     return _STUB_PAYLOADS.get(frame_number)
 
 
@@ -494,7 +646,52 @@ def validate_display_filter(filter_text: str) -> FilterValidationResult:
 # --- Conversation / stream query methods (stub) ---
 
 def list_conversations(capture_path: str) -> list[ConversationData]:
-    """List conversations (flows) for a capture. Returns deterministic fixture data."""
+    """List conversations (flows) for a capture."""
+    real_items = _read_real_packets_cache(capture_path)
+    if _is_meaningful_capture(real_items) and real_items is not None:
+        conv_map: dict[tuple, dict] = {}
+        for item in real_items:
+            src = item["src_ip"]
+            dst = item["dst_ip"]
+            sport = item["src_port"] or 0
+            dport = item["dst_port"] or 0
+            proto = item["protocol"]
+
+            # Key pair
+            if (src, sport) > (dst, dport):
+                pair = (dst, dport, src, sport, proto)
+            else:
+                pair = (src, sport, dst, dport, proto)
+
+            if pair not in conv_map:
+                conv_map[pair] = {
+                    "src_addr": pair[0],
+                    "src_port": pair[1],
+                    "dst_addr": pair[2],
+                    "dst_port": pair[3],
+                    "protocol": pair[4],
+                    "packet_count": 0,
+                    "byte_count": 0,
+                }
+            conv_map[pair]["packet_count"] += 1
+            conv_map[pair]["byte_count"] += item["summary"].length
+
+        result = []
+        for idx, (_, data) in enumerate(sorted(conv_map.items(), key=lambda x: -x[1]["packet_count"]), start=1):
+            result.append(
+                ConversationData(
+                    id=idx,
+                    src_addr=data["src_addr"],
+                    src_port=data["src_port"],
+                    dst_addr=data["dst_addr"],
+                    dst_port=data["dst_port"],
+                    protocol=data["protocol"],
+                    packet_count=data["packet_count"],
+                    byte_count=data["byte_count"],
+                )
+            )
+        return result
+
     return list(_STUB_CONVERSATIONS)
 
 
@@ -529,10 +726,39 @@ def follow_stream(
 # --- Capture Index / Timeline stubs ---
 
 def build_capture_index(capture_path: str) -> IndexData:
-    """Build a Capture Index from a capture file.
+    """Build a Capture Index from a capture file."""
+    real_items = _read_real_packets_cache(capture_path)
+    if _is_meaningful_capture(real_items) and real_items is not None and len(real_items) > 0:
+        protocol_counts: dict[str, int] = {}
+        endpoint_counts: dict[str, int] = {}
+        total_bytes = 0
 
-    Stub returns deterministic data derived from the fixture packets.
-    """
+        for item in real_items:
+            s = item["summary"]
+            protocol_counts[s.protocol] = protocol_counts.get(s.protocol, 0) + 1
+            endpoint_counts[item["src_ip"]] = endpoint_counts.get(item["src_ip"], 0) + 1
+            endpoint_counts[item["dst_ip"]] = endpoint_counts.get(item["dst_ip"], 0) + 1
+            total_bytes += s.length
+
+        top_endpoints = [
+            {"address": addr, "packet_count": count}
+            for addr, count in sorted(endpoint_counts.items(), key=lambda x: -x[1])
+        ]
+
+        conversations = set()
+        for item in real_items:
+            conversations.add((item["src_ip"], item["dst_ip"]))
+
+        return IndexData(
+            protocol_mix=protocol_counts,
+            top_endpoints=top_endpoints,
+            conversations_count=len(conversations),
+            time_range_start=real_items[0]["summary"].timestamp,
+            time_range_end=real_items[-1]["summary"].timestamp,
+            total_packets=len(real_items),
+            total_bytes=total_bytes,
+        )
+
     protocol_counts: dict[str, int] = {}
     endpoint_counts: dict[str, int] = {}
     total_bytes = 0
