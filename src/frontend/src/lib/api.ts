@@ -311,11 +311,47 @@ export async function getEvidenceMap(
   token: string,
   artifactId: number
 ): Promise<EvidenceMapItem> {
-  const res = await fetch(`${API_BASE}/api/evidence/artifact/${artifactId}`, {
+  // First get or create analysis run for this artifact
+  const runRes = await fetch(`${API_BASE}/api/analysis-runs?capture_artifact_id=${artifactId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error("Failed to fetch evidence map");
-  return res.json();
+  let runId: number;
+  if (runRes.ok) {
+    const runs = await runRes.json();
+    if (runs.length > 0) {
+      runId = runs[0].id;
+    } else {
+      const createRun = await fetch(`${API_BASE}/api/analysis-runs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ capture_artifact_id: artifactId }),
+      });
+      const newRun = await createRun.json();
+      runId = newRun.id;
+    }
+  } else {
+    throw new Error("Failed to query analysis runs");
+  }
+
+  // Next get or create evidence map for this run
+  const emapRes = await fetch(`${API_BASE}/api/analysis-runs/${runId}/evidence-map`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (emapRes.ok) {
+    return emapRes.json();
+  } else if (emapRes.status === 404) {
+    const createMap = await fetch(`${API_BASE}/api/analysis-runs/${runId}/evidence-map`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!createMap.ok) throw new Error("Failed to create evidence map");
+    return createMap.json();
+  } else {
+    throw new Error("Failed to fetch evidence map");
+  }
 }
 
 export interface ReportSectionItem {
@@ -340,7 +376,7 @@ export async function draftReport(
   token: string,
   evidenceMapId: number
 ): Promise<ReportItem> {
-  const res = await fetch(`${API_BASE}/api/reports/draft?evidence_map_id=${evidenceMapId}`, {
+  const res = await fetch(`${API_BASE}/api/reports/evidence-maps/${evidenceMapId}/reports/draft`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
