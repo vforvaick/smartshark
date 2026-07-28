@@ -247,14 +247,29 @@ export async function hardDeleteCapture(
 export interface PacketItem {
   frame_number: number;
   timestamp: string;
-  src_ip: string;
-  dst_ip: string;
+  source: string;
+  destination: string;
   protocol: string;
   length: number;
   info: string;
-  dissector_tree?: Record<string, unknown>;
-  payload_hex?: string;
-  payload_ascii?: string;
+}
+
+export interface LayerField {
+  name: string;
+  value: string;
+}
+
+export interface FrameDetail {
+  frame_number: number;
+  timestamp: string;
+  protocols: string[];
+  layers: LayerField[];
+}
+
+export interface PayloadPreview {
+  hex_dump: string;
+  ascii: string;
+  length: number;
 }
 
 export async function getPackets(
@@ -263,8 +278,8 @@ export async function getPackets(
   filter?: string
 ): Promise<PacketItem[]> {
   const url = filter
-    ? `${API_BASE}/api/packets/${artifactId}?filter=${encodeURIComponent(filter)}`
-    : `${API_BASE}/api/packets/${artifactId}`;
+    ? `${API_BASE}/api/captures/${artifactId}/packets?filter=${encodeURIComponent(filter)}`
+    : `${API_BASE}/api/captures/${artifactId}/packets`;
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -272,21 +287,46 @@ export async function getPackets(
   return res.json();
 }
 
+export async function getFrameDetail(
+  token: string,
+  artifactId: number,
+  frameNumber: number
+): Promise<FrameDetail> {
+  const res = await fetch(`${API_BASE}/api/captures/${artifactId}/frames/${frameNumber}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch frame detail");
+  return res.json();
+}
+
+export async function getPayloadPreview(
+  token: string,
+  artifactId: number,
+  frameNumber: number
+): Promise<PayloadPreview> {
+  const res = await fetch(`${API_BASE}/api/captures/${artifactId}/frames/${frameNumber}/payload`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch payload preview");
+  return res.json();
+}
+
 export interface ConversationItem {
   id: number;
-  conv_id: string;
+  src_addr: string;
+  src_port: number;
+  dst_addr: string;
+  dst_port: number;
   protocol: string;
-  src_endpoint: string;
-  dst_endpoint: string;
-  frame_count: number;
-  bytes_count: number;
+  packet_count: number;
+  byte_count: number;
 }
 
 export async function getConversations(
   token: string,
   artifactId: number
 ): Promise<ConversationItem[]> {
-  const res = await fetch(`${API_BASE}/api/conversations/${artifactId}`, {
+  const res = await fetch(`${API_BASE}/api/captures/${artifactId}/conversations`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("Failed to fetch conversations");

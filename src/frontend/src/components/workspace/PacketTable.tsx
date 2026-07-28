@@ -54,8 +54,8 @@ export default function PacketTable({
               >
                 <td className="px-3 py-1.5">{pkt.frame_number}</td>
                 <td className="px-3 py-1.5">{pkt.timestamp}</td>
-                <td className="px-3 py-1.5">{pkt.src_ip}</td>
-                <td className="px-3 py-1.5">{pkt.dst_ip}</td>
+                <td className="px-3 py-1.5">{pkt.source}</td>
+                <td className="px-3 py-1.5">{pkt.destination}</td>
                 <td className="px-3 py-1.5">
                   <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] uppercase font-sans font-bold">
                     {pkt.protocol}

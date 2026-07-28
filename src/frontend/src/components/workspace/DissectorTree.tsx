@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { type PacketItem } from "@/lib/api";
+import { type PacketItem, type FrameDetail } from "@/lib/api";
 
 interface DissectorTreeProps {
   packet: PacketItem | null;
+  frameDetail?: FrameDetail | null;
 }
 
-export default function DissectorTree({ packet }: DissectorTreeProps) {
+export default function DissectorTree({ packet, frameDetail }: DissectorTreeProps) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     frame: true,
-    eth: true,
     ip: true,
     proto: true,
+    detail: true,
   });
 
   if (!packet) {
@@ -54,16 +55,37 @@ export default function DissectorTree({ packet }: DissectorTreeProps) {
           onClick={() => toggle("ip")}
           className="flex items-center gap-1 font-semibold text-gray-800 hover:text-blue-600"
         >
-          <span>{openSections.ip ? "▼" : "▶"}</span> Internet Protocol Version 4, Src: {packet.src_ip}, Dst: {packet.dst_ip}
+          <span>{openSections.ip ? "▼" : "▶"}</span> Internet Protocol Version 4, Src: {packet.source}, Dst: {packet.destination}
         </button>
         {openSections.ip && (
           <div className="pl-4 text-gray-600 space-y-0.5 mt-1 border-l-2 border-gray-200">
-            <div>Source Address: {packet.src_ip}</div>
-            <div>Destination Address: {packet.dst_ip}</div>
+            <div>Source Address: {packet.source}</div>
+            <div>Destination Address: {packet.destination}</div>
             <div>Protocol: {packet.protocol}</div>
           </div>
         )}
       </div>
+
+      {/* Frame Detail Layers if available */}
+      {frameDetail && frameDetail.layers && frameDetail.layers.length > 0 && (
+        <div>
+          <button
+            onClick={() => toggle("detail")}
+            className="flex items-center gap-1 font-semibold text-gray-800 hover:text-blue-600"
+          >
+            <span>{openSections.detail ? "▼" : "▶"}</span> Protocols: {frameDetail.protocols?.join(", ")}
+          </button>
+          {openSections.detail && (
+            <div className="pl-4 text-gray-600 space-y-0.5 mt-1 border-l-2 border-gray-200">
+              {frameDetail.layers.map((l, idx) => (
+                <div key={idx}>
+                  <span className="font-semibold text-gray-700">{l.name}:</span> {l.value}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Application / Info Layer */}
       <div>

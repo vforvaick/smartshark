@@ -48,12 +48,12 @@ export default function ConversationsList({
               onClick={() => onSelectConv?.(c)}
               className="hover:bg-gray-50 cursor-pointer transition-colors"
             >
-              <td className="px-3 py-1.5 font-bold text-blue-600">{c.conv_id}</td>
+              <td className="px-3 py-1.5 font-bold text-blue-600">#{c.id}</td>
               <td className="px-3 py-1.5 uppercase text-[10px] font-sans font-bold text-gray-700">{c.protocol}</td>
-              <td className="px-3 py-1.5 text-gray-900">{c.src_endpoint}</td>
-              <td className="px-3 py-1.5 text-gray-900">{c.dst_endpoint}</td>
-              <td className="px-3 py-1.5 text-right">{c.frame_count}</td>
-              <td className="px-3 py-1.5 text-right">{c.bytes_count}</td>
+              <td className="px-3 py-1.5 text-gray-900">{c.src_addr}:{c.src_port}</td>
+              <td className="px-3 py-1.5 text-gray-900">{c.dst_addr}:{c.dst_port}</td>
+              <td className="px-3 py-1.5 text-right">{c.packet_count}</td>
+              <td className="px-3 py-1.5 text-right">{c.byte_count}</td>
             </tr>
           ))}
         </tbody>

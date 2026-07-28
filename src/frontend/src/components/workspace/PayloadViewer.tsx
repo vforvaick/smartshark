@@ -1,12 +1,13 @@
 "use client";
 
-import { type PacketItem } from "@/lib/api";
+import { type PacketItem, type PayloadPreview } from "@/lib/api";
 
 interface PayloadViewerProps {
   packet: PacketItem | null;
+  payload?: PayloadPreview | null;
 }
 
-export default function PayloadViewer({ packet }: PayloadViewerProps) {
+export default function PayloadViewer({ packet, payload }: PayloadViewerProps) {
   if (!packet) {
     return (
       <div className="p-4 text-center text-xs text-gray-400 border rounded bg-gray-50 h-48 flex items-center justify-center">
@@ -15,8 +16,8 @@ export default function PayloadViewer({ packet }: PayloadViewerProps) {
     );
   }
 
-  const hex = packet.payload_hex || "00 00 00 00 45 00 00 3c 1c 46 40 00 40 06 b1 e6 c0 a8 01 01 c0 a8 01 02";
-  const ascii = packet.payload_ascii || "....E..<.F@.@............";
+  const hex = payload?.hex_dump || "00 00 00 00 45 00 00 3c 1c 46 40 00 40 06 b1 e6 c0 a8 01 01 c0 a8 01 02";
+  const ascii = payload?.ascii || "....E..<.F@.@............";
 
   return (
     <div className="border rounded bg-white p-3 font-mono text-xs shadow-sm">

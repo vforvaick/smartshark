@@ -8,6 +8,8 @@ import {
   getPackets,
   getConversations,
   getEvidenceMap,
+  getFrameDetail,
+  getPayloadPreview,
   draftReport,
   updateReportSection,
   type CaptureArtifact,
@@ -16,6 +18,8 @@ import {
   type ImportDiagnosticError,
   type EvidenceCardItem,
   type ReportItem,
+  type FrameDetail,
+  type PayloadPreview,
 } from "@/lib/api";
 import UploadModal from "@/components/workspace/UploadModal";
 import ImportDiagnosticModal from "@/components/workspace/ImportDiagnosticModal";
@@ -37,6 +41,8 @@ export default function WorkspacePage() {
 
   const [packets, setPackets] = useState<PacketItem[]>([]);
   const [selectedPacket, setSelectedPacket] = useState<PacketItem | null>(null);
+  const [frameDetail, setFrameDetail] = useState<FrameDetail | null>(null);
+  const [payloadPreview, setPayloadPreview] = useState<PayloadPreview | null>(null);
   const [loadingPackets, setLoadingPackets] = useState(false);
 
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
@@ -66,6 +72,29 @@ export default function WorkspacePage() {
       fetchCaptureData(selectedCapture.id);
     }
   }, [token, selectedCapture]);
+
+  useEffect(() => {
+    let active = true;
+    if (token && selectedCapture && selectedPacket) {
+      getFrameDetail(token, selectedCapture.id, selectedPacket.frame_number)
+        .then((d) => {
+          if (active) setFrameDetail(d);
+        })
+        .catch(() => {
+          if (active) setFrameDetail(null);
+        });
+      getPayloadPreview(token, selectedCapture.id, selectedPacket.frame_number)
+        .then((p) => {
+          if (active) setPayloadPreview(p);
+        })
+        .catch(() => {
+          if (active) setPayloadPreview(null);
+        });
+    }
+    return () => {
+      active = false;
+    };
+  }, [token, selectedCapture, selectedPacket]);
 
   async function fetchCapturesList() {
     try {
@@ -277,8 +306,8 @@ export default function WorkspacePage() {
                 loading={loadingPackets}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DissectorTree packet={selectedPacket} />
-                <PayloadViewer packet={selectedPacket} />
+                <DissectorTree packet={selectedPacket} frameDetail={frameDetail} />
+                <PayloadViewer packet={selectedPacket} payload={payloadPreview} />
               </div>
             </div>
           )}
