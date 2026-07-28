@@ -8,10 +8,14 @@ import {
   updateAIProvider,
   type AIProviderSettings,
 } from "@/lib/api";
+import AnalystManagement from "@/components/admin/AnalystManagement";
+import RedactionPolicyComponent from "@/components/admin/RedactionPolicy";
+import AuditLogs from "@/components/admin/AuditLogs";
 
 export default function AdminSettingsPage() {
   const { user, token, loading } = useAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"ai" | "analysts" | "redaction" | "audit">("ai");
   const [settings, setSettings] = useState<AIProviderSettings | null>(null);
   const [provider, setProvider] = useState("");
   const [model, setModel] = useState("");
@@ -80,83 +84,135 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </nav>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h2 className="text-lg font-semibold text-gray-900">
-          AI Provider Settings
-        </h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Configure the AI model provider for analysis.
-        </p>
 
-        <form onSubmit={handleSave} className="mt-6 space-y-6">
-          {saved && (
-            <div className="rounded-md bg-green-50 p-4 text-sm text-green-700">
-              Settings saved successfully.
-            </div>
-          )}
-          {error && (
-            <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-          <div className="space-y-4 rounded-md bg-white p-6 shadow">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Provider
-              </label>
-              <select
-                value={provider}
-                onChange={(e) => setProvider(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              >
-                <option value="openai">OpenAI</option>
-                <option value="anthropic">Anthropic</option>
-                <option value="local">Local</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Model
-              </label>
-              <input
-                type="text"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                API Key
-              </label>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder={settings?.api_key_set ? "••••••••" : "Enter API key"}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Base URL (optional)
-              </label>
-              <input
-                type="text"
-                value={baseUrl}
-                onChange={(e) => setBaseUrl(e.target.value)}
-                placeholder="https://api.openai.com/v1"
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              />
-            </div>
-          </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <div className="flex border-b border-gray-200 mb-6 gap-4 text-sm font-medium">
           <button
-            type="submit"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            onClick={() => setActiveTab("ai")}
+            className={`pb-3 px-1 border-b-2 ${
+              activeTab === "ai"
+                ? "border-blue-600 text-blue-600 font-semibold"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
           >
-            Save settings
+            AI Provider
           </button>
-        </form>
+          <button
+            onClick={() => setActiveTab("analysts")}
+            className={`pb-3 px-1 border-b-2 ${
+              activeTab === "analysts"
+                ? "border-blue-600 text-blue-600 font-semibold"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Analyst Accounts
+          </button>
+          <button
+            onClick={() => setActiveTab("redaction")}
+            className={`pb-3 px-1 border-b-2 ${
+              activeTab === "redaction"
+                ? "border-blue-600 text-blue-600 font-semibold"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Redaction Policy
+          </button>
+          <button
+            onClick={() => setActiveTab("audit")}
+            className={`pb-3 px-1 border-b-2 ${
+              activeTab === "audit"
+                ? "border-blue-600 text-blue-600 font-semibold"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Audit Logs
+          </button>
+        </div>
+
+        {activeTab === "ai" && (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              AI Provider Settings
+            </h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Configure the AI model provider for analysis.
+            </p>
+
+            <form onSubmit={handleSave} className="mt-6 space-y-6">
+              {saved && (
+                <div className="rounded-md bg-green-50 p-4 text-sm text-green-700">
+                  Settings saved successfully.
+                </div>
+              )}
+              {error && (
+                <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+              <div className="space-y-4 rounded-md bg-white p-6 shadow-sm border">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Provider
+                  </label>
+                  <select
+                    value={provider}
+                    onChange={(e) => setProvider(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  >
+                    <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic</option>
+                    <option value="local">Local</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Model
+                  </label>
+                  <input
+                    type="text"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    API Key
+                  </label>
+                  <input
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder={settings?.api_key_set ? "••••••••" : "Enter API key"}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Base URL (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={baseUrl}
+                    onChange={(e) => setBaseUrl(e.target.value)}
+                    placeholder="https://api.openai.com/v1"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Save settings
+              </button>
+            </form>
+          </div>
+        )}
+
+        {activeTab === "analysts" && <AnalystManagement token={token!} />}
+        {activeTab === "redaction" && <RedactionPolicyComponent token={token!} />}
+        {activeTab === "audit" && <AuditLogs token={token!} />}
       </main>
     </div>
   );
